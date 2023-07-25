@@ -51,8 +51,9 @@
 
 namespace flatland_server {
 
-Model::Model(std::shared_ptr<rclcpp::Node> node, b2World *physics_world, CollisionFilterRegistry *cfr,
-             const std::string &ns, const std::string &name)
+Model::Model(std::shared_ptr<rclcpp::Node> node, b2World *physics_world,
+             CollisionFilterRegistry *cfr, const std::string &ns,
+             const std::string &name)
     : Entity(node, physics_world, name),
       namespace_(ns),
       cfr_(cfr),
@@ -75,7 +76,8 @@ Model::~Model() {
   DebugVisualization::Get(node_)->Reset(viz_name_);
 }
 
-Model *Model::MakeModel(std::shared_ptr<rclcpp::Node> node, b2World *physics_world, CollisionFilterRegistry *cfr,
+Model *Model::MakeModel(std::shared_ptr<rclcpp::Node> node,
+                        b2World *physics_world, CollisionFilterRegistry *cfr,
                         const std::string &model_yaml_path,
                         const std::string &ns, const std::string &name) {
   YamlReader reader(node, model_yaml_path);
@@ -108,10 +110,11 @@ void Model::LoadBodies(YamlReader &bodies_reader) {
     for (int i = 0; i < bodies_reader.NodeSize(); i++) {
       YamlReader body_reader = bodies_reader.Subnode(i, YamlReader::MAP);
       if (!body_reader.Get<bool>("enabled", "true")) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("Model"), "Body "
-                        << Q(name_) << "."
-                        << body_reader.Get<std::string>("name", "unnamed")
-                        << " disabled");
+        RCLCPP_INFO_STREAM(
+            rclcpp::get_logger("Model"),
+            "Body " << Q(name_) << "."
+                    << body_reader.Get<std::string>("name", "unnamed")
+                    << " disabled");
         continue;
       }
       ModelBody *b =
@@ -134,10 +137,11 @@ void Model::LoadJoints(YamlReader &joints_reader) {
     for (int i = 0; i < joints_reader.NodeSize(); i++) {
       YamlReader joint_reader = joints_reader.Subnode(i, YamlReader::MAP);
       if (!joint_reader.Get<bool>("enabled", "true")) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("YAML Preprocessor"), ""
-                        << Q(name_) << "."
-                        << joint_reader.Get<std::string>("name", "unnamed")
-                        << " disabled");
+        RCLCPP_INFO_STREAM(
+            rclcpp::get_logger("YAML Preprocessor"),
+            "" << Q(name_) << "."
+               << joint_reader.Get<std::string>("name", "unnamed")
+               << " disabled");
         continue;
       }
       Joint *j = Joint::MakeJoint(physics_world_, this, joint_reader);
@@ -185,7 +189,7 @@ std::string Model::NameSpaceTF(const std::string &frame_id) const {
                        std::string::npos);  // Strip the leading '/'
   } else {  // case: "local" namespace: prepend namespace
     if (namespace_.length() > 0) {
-      return namespace_ + "_" + frame_id;
+      return namespace_ + "/" + frame_id;
     } else {
       return frame_id;
     }
@@ -256,23 +260,23 @@ void Model::DebugVisualize() const {
 
   for (const auto &body : bodies_) {
     DebugVisualization::Get(node_)->Visualize(viz_name_, body->physics_body_,
-                                        body->color_.r, body->color_.g,
-                                        body->color_.b, body->color_.a);
+                                              body->color_.r, body->color_.g,
+                                              body->color_.b, body->color_.a);
   }
 
   for (const auto &joint : joints_) {
     DebugVisualization::Get(node_)->Visualize(viz_name_, joint->physics_joint_,
-                                        joint->color_.r, joint->color_.g,
-                                        joint->color_.b, joint->color_.a);
+                                              joint->color_.r, joint->color_.g,
+                                              joint->color_.b, joint->color_.a);
   }
 }
 
 void Model::DebugOutput() const {
   RCLCPP_DEBUG(rclcpp::get_logger("Model"),
-                  "Model %p: physics_world(%p) name(%s) namespace(%s) "
-                  "num_bodies(%lu) num_joints(%lu)",
-                  this, physics_world_, name_.c_str(), namespace_.c_str(),
-                  bodies_.size(), joints_.size());
+               "Model %p: physics_world(%p) name(%s) namespace(%s) "
+               "num_bodies(%lu) num_joints(%lu)",
+               this, physics_world_, name_.c_str(), namespace_.c_str(),
+               bodies_.size(), joints_.size());
 
   for (const auto &body : bodies_) {
     body->DebugOutput();
@@ -303,4 +307,4 @@ void Model::DumpBox2D() const {
     joint->physics_joint_->Dump();
   }
 }
-}  //namespace flatland_server
+}  // namespace flatland_server
