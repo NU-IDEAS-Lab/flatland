@@ -130,6 +130,9 @@ find_package(ament_cmake REQUIRED)
 
 include_directories(include)
 
+# Support library export on Windows.
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_library(flatland_box2d_lib SHARED
 	${BOX2D_General_HDRS}
 	${BOX2D_Joints_SRCS}
