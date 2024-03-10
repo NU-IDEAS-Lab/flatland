@@ -1,6 +1,6 @@
 /*
  * @copyright Copyright 2022 FEUP
- * @name change_rate_dialog.hpp
+ * @name change_rate_dialog.cpp
  * @brief dialog to change rate
  * @author Ana Barros
  * @author Henrique Ribeiro
@@ -57,21 +57,22 @@
 
 #include "flatland_rviz_plugins/change_rate_tool.hpp"
 
-namespace flatland_rviz_plugins {
+namespace flatland_rviz_plugins
+{
 
-class ChangeRateDialog : public QDialog {
- public:
-  ChangeRateDialog(QWidget *parent, rviz_common::DisplayContext *context,
-                   ChangeRateTool *tool);
+class ChangeRateDialog : public QDialog
+{
+public:
+  ChangeRateDialog(QWidget * parent, rviz_common::DisplayContext * context, ChangeRateTool * tool);
 
- private:
-  rviz_common::DisplayContext *context_;
+private:
+  rviz_common::DisplayContext * context_;
 
-  QLineEdit *r_edit;  // name lineEdit widget
+  QLineEdit * r_edit;  // name lineEdit widget
 
-  ChangeRateTool *tool_;
+  ChangeRateTool * tool_;
 
- public Q_SLOTS:
+public Q_SLOTS:
   /**
    * @name                CancelButtonClicked
    * @brief               Cancel button was clicked, dismiss dialog
