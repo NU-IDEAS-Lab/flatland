@@ -50,7 +50,7 @@
 #include <flatland_server/model_plugin.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/convert.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <pluginlib/class_list_macros.hpp>
@@ -59,7 +59,7 @@
 namespace flatland_plugins
 {
 
-void DiffDrive::TwistCallback(const geometry_msgs::msg::Twist::SharedPtr msg) { twist_msg_ = msg; }
+void DiffDrive::TwistCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg) { twist_msg_ = msg; }
 
 void DiffDrive::OnInitialize(const YAML::Node & config)
 {
@@ -120,7 +120,7 @@ void DiffDrive::OnInitialize(const YAML::Node & config)
 
   // publish and subscribe to topics
   using std::placeholders::_1;
-  twist_sub_ = node_->create_subscription<geometry_msgs::msg::Twist>(
+  twist_sub_ = node_->create_subscription<geometry_msgs::msg::TwistStamped>(
     twist_topic, 1, std::bind(&DiffDrive::TwistCallback, this, _1));
   if (enable_odom_pub_) {
     odom_pub_ = node_->create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1);
@@ -162,7 +162,7 @@ void DiffDrive::OnInitialize(const YAML::Node & config)
     "twist_sub(%s) odom_pub(%s) ground_truth_pub(%s) "
     "odom_pose_noise({%f,%f,%f}) odom_twist_noise({%f,%f,%f}) "
     "pub_rate(%f)\n",
-    body_, body_->name_.c_str(), odom_frame_id.c_str(), twist_topic.c_str(), odom_topic.c_str(),
+    (void*)body_, body_->name_.c_str(), odom_frame_id.c_str(), twist_topic.c_str(), odom_topic.c_str(),
     ground_truth_topic.c_str(), odom_pose_noise[0], odom_pose_noise[1], odom_pose_noise[2],
     odom_twist_noise[0], odom_twist_noise[1], odom_twist_noise[2], pub_rate);
 }
@@ -243,9 +243,9 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper & timekeeper)
   // we apply the twist velocities, this must be done every physics step to make
   // sure Box2D solver applies the correct velocity through out. The velocity
   // given in the twist message should be in the local frame
-  b2Vec2 linear_vel_local(twist_msg_->linear.x, 0);
+  b2Vec2 linear_vel_local(twist_msg_->twist.linear.x, 0);
   b2Vec2 linear_vel = b2body->GetWorldVector(linear_vel_local);
-  float angular_vel = twist_msg_->angular.z;  // angular is independent of frames
+  float angular_vel = twist_msg_->twist.angular.z;  // angular is independent of frames
 
   // we want the velocity vector in the world frame at the center of mass
 
