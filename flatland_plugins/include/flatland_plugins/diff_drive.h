@@ -49,10 +49,10 @@
 #include <flatland_plugins/dynamics_limits.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/timekeeper.h>
-#include <geometry_msgs/msg/twist.hpp>
+#include <tf2_ros/transform_broadcaster.h>
+
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tf2_ros/transform_broadcaster.h>
 #include <random>
 
 #ifndef FLATLAND_PLUGINS_DIFFDRIVE_H
@@ -60,16 +60,18 @@
 
 using namespace flatland_server;
 
-namespace flatland_plugins {
+namespace flatland_plugins
+{
 
-class DiffDrive : public flatland_server::ModelPlugin {
- public:
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twist_sub_;
+class DiffDrive : public flatland_server::ModelPlugin
+{
+public:
+  rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr twist_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr ground_truth_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
-  Body* body_;
-  geometry_msgs::msg::Twist::SharedPtr twist_msg_ = std::make_shared<geometry_msgs::msg::Twist>();
+  Body * body_;
+  geometry_msgs::msg::TwistStamped::SharedPtr twist_msg_ = std::make_shared<geometry_msgs::msg::TwistStamped>();
   nav_msgs::msg::Odometry odom_msg_;
   nav_msgs::msg::Odometry ground_truth_msg_;
   UpdateTimer update_timer_;
@@ -89,20 +91,20 @@ class DiffDrive : public flatland_server::ModelPlugin {
    * @brief         override the BeforePhysicsStep method
    * @param[in]     config The plugin YAML node
    */
-  void OnInitialize(const YAML::Node& config) override;
+  void OnInitialize(const YAML::Node & config) override;
   /**
    * @name          BeforePhysicsStep
    * @brief         override the BeforePhysicsStep method
    * @param[in]     config The plugin YAML node
    */
-  void BeforePhysicsStep(const Timekeeper& timekeeper) override;
+  void BeforePhysicsStep(const Timekeeper & timekeeper) override;
   /**
    * @name        TwistCallback
    * @brief       callback to apply twist (velocity and omega)
    * @param[in]   timestep how much the physics time will increment
    */
-  void TwistCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  void TwistCallback(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
 };
-}
+}  // namespace flatland_plugins
 
 #endif

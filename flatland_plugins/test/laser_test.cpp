@@ -58,24 +58,31 @@ using namespace flatland_server;
 using namespace flatland_plugins;
 using std::placeholders::_1;
 
-class LaserPluginTest : public ::testing::Test {
- public:
+class LaserPluginTest : public ::testing::Test
+{
+public:
   boost::filesystem::path this_file_dir;
   boost::filesystem::path world_yaml;
   sensor_msgs::msg::LaserScan scan_front, scan_center, scan_back;
-  World* w;
+  bool scan_front_received, scan_center_received, scan_back_received;
+  World * w;
   std::shared_ptr<rclcpp::Node> node;
 
   LaserPluginTest() : node(rclcpp::Node::make_shared("test_laser_plugin")) {}
 
-  void SetUp() override {
+  void SetUp() override
+  {
     this_file_dir = boost::filesystem::path(__FILE__).parent_path();
     w = nullptr;
+    scan_front_received = false;
+    scan_center_received = false;
+    scan_back_received = false;
   }
 
   void TearDown() override { delete w; }
 
-  static bool fltcmp(const double& n1, const double& n2) {
+  static bool fltcmp(const double & n1, const double & n2)
+  {
     if (std::isinf(n1) && std::isinf(n2)) {
       return true;
     }
@@ -89,16 +96,18 @@ class LaserPluginTest : public ::testing::Test {
   }
 
   // print content of the vector for debugging
-  void print_flt_vec(const std::vector<float>& v) {
+  void print_flt_vec(const std::vector<float> & v)
+  {
     printf("{");
-    for (const auto& e : v) {
+    for (const auto & e : v) {
       printf("%f,", e);
     }
     printf("}");
   }
 
   // check the float values equals and print message for debugging
-  bool FloatEq(const char* name, float actual, float expected) {
+  bool FloatEq(const char * name, float actual, float expected)
+  {
     if (actual != expected) {
       printf("%s Actual:%f != Expected %f", name, actual, expected);
       return false;
@@ -107,30 +116,56 @@ class LaserPluginTest : public ::testing::Test {
   }
 
   // check the received scan data is as expected
-  bool ScanEq(const sensor_msgs::msg::LaserScan& scan,
-              const std::string& frame_id, float angle_min, float angle_max,
-              float angle_increment, float time_increment, float scan_time,
-              float range_min, float range_max, std::vector<float> ranges,
-              std::vector<float> intensities) {
+  bool ScanEq(
+    const sensor_msgs::msg::LaserScan & scan, const std::string & frame_id, float angle_min,
+    float angle_max, float angle_increment, float time_increment, float scan_time, float range_min,
+    float range_max, std::vector<float> ranges, std::vector<float> intensities)
+  {
+    bool return_value = true;
     if (scan.header.frame_id != frame_id) {
-      printf("frame_id Actual:%s != Expected:%s\n",
-             scan.header.frame_id.c_str(), frame_id.c_str());
-      return false;
+      printf("frame_id Actual:%s != Expected:%s\n", scan.header.frame_id.c_str(), frame_id.c_str());
+      return_value = false;
     }
 
-    if (!FloatEq("angle_min", scan.angle_min, angle_min)) return false;
-    if (!FloatEq("angle_max", scan.angle_max, angle_max)) return false;
-    if (!FloatEq("angle_increment", scan.angle_increment, angle_increment))
-      return false;
-    if (!FloatEq("time_increment", scan.time_increment, time_increment))
-      return false;
-    if (!FloatEq("scan_time", scan.scan_time, scan_time)) return false;
-    if (!FloatEq("range_min", scan.range_min, range_min)) return false;
-    if (!FloatEq("range_max", scan.range_max, range_max)) return false;
+    if (!FloatEq("angle_min", scan.angle_min, angle_min)) {
+      printf("angle_min Actual: %f != Expected: %f\n", scan.angle_min, angle_min);
+      return_value = false;
+    }
 
-    if (ranges.size() != scan.ranges.size() ||
-        !std::equal(ranges.begin(), ranges.end(), scan.ranges.begin(),
-                    fltcmp)) {
+    if (!FloatEq("angle_max", scan.angle_max, angle_max)) {
+      printf("angle_max Actual: %f != Expected: %f\n", scan.angle_max, angle_max);
+      return_value = false;
+    }
+
+    if (!FloatEq("angle_increment", scan.angle_increment, angle_increment)) {
+      printf("angle_increment Actual: %f != Expected: %f\n", scan.angle_increment, angle_increment);
+      return_value = false;
+    }
+
+    if (!FloatEq("time_increment", scan.time_increment, time_increment)) {
+      printf("time_increment Actual: %f != Expected: %f\n", scan.time_increment, time_increment);
+      return_value = false;
+    }
+
+    if (!FloatEq("scan_time", scan.scan_time, scan_time)) {
+      printf("scan_time Actual: %f != Expected: %f\n", scan.scan_time, scan_time);
+      return_value = false;
+    }
+
+    if (!FloatEq("range_min", scan.range_min, range_min)) {
+      printf("range_min Actual: %f != Expected: %f\n", scan.range_min, range_min);
+      return_value = false;
+    }
+
+    if (!FloatEq("range_max", scan.range_max, range_max)) {
+      printf("range_max Actual: %f != Expected: %f\n", scan.range_max, range_max);
+      return_value = false;
+    }
+
+
+    if (
+      ranges.size() != scan.ranges.size() ||
+      !std::equal(ranges.begin(), ranges.end(), scan.ranges.begin(), fltcmp)) {
       printf("\"ranges\" does not match\n");
       printf("Actual: ");
       print_flt_vec(scan.ranges);
@@ -138,12 +173,12 @@ class LaserPluginTest : public ::testing::Test {
       printf("Expected: ");
       print_flt_vec(ranges);
       printf("\n");
-      return false;
+      return_value = false;
     }
 
-    if (intensities.size() != scan.intensities.size() ||
-        !std::equal(intensities.begin(), intensities.end(),
-                    scan.intensities.begin(), fltcmp)) {
+    if (
+      intensities.size() != scan.intensities.size() ||
+      !std::equal(intensities.begin(), intensities.end(), scan.intensities.begin(), fltcmp)) {
       printf("\"intensities\" does not math");
       printf("Actual: ");
       print_flt_vec(scan.intensities);
@@ -151,25 +186,34 @@ class LaserPluginTest : public ::testing::Test {
       printf("Expected: ");
       print_flt_vec(intensities);
       printf("\n");
-      return false;
+      return_value = false;
     }
 
-    return true;
+    return return_value;
   }
 
-  void ScanFrontCb(const sensor_msgs::msg::LaserScan& msg) {
+  void ScanFrontCb(const sensor_msgs::msg::LaserScan & msg) {
     scan_front = msg;
+    scan_front_received = true;
   };
-  void ScanCenterCb(const sensor_msgs::msg::LaserScan& msg) {
+
+  void ScanCenterCb(const sensor_msgs::msg::LaserScan & msg) {
     scan_center = msg;
+    scan_center_received = true;
   };
-  void ScanBackCb(const sensor_msgs::msg::LaserScan& msg) { scan_back = msg; };
+
+  void ScanBackCb(const sensor_msgs::msg::LaserScan & msg) {
+    scan_back = msg;
+    scan_back_received = true;
+  };
+
 };
 
 /**
  * Test the laser plugin for a given model and plugin configuration
  */
-TEST_F(LaserPluginTest, range_test) {
+TEST_F(LaserPluginTest, range_test)
+{
   world_yaml = this_file_dir / fs::path("laser_tests/range_test/world.yaml");
 
   Timekeeper timekeeper(node);
@@ -177,66 +221,74 @@ TEST_F(LaserPluginTest, range_test) {
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("test_node");
   w = World::MakeWorld(node, world_yaml.string());
 
-  auto* obj = dynamic_cast<LaserPluginTest*>(this);
+  auto * obj = dynamic_cast<LaserPluginTest *>(this);
   auto sub_1 = node->create_subscription<sensor_msgs::msg::LaserScan>(
-      "scan", 1, std::bind(&LaserPluginTest::ScanFrontCb, obj, _1));
+    "robot1/scan", 1, std::bind(&LaserPluginTest::ScanFrontCb, obj, _1));
   auto sub_2 = node->create_subscription<sensor_msgs::msg::LaserScan>(
-      "scan_center", 1, std::bind(&LaserPluginTest::ScanCenterCb, obj, _1));
+    "robot1/scan_center", 1, std::bind(&LaserPluginTest::ScanCenterCb, obj, _1));
   auto sub_3 = node->create_subscription<sensor_msgs::msg::LaserScan>(
-      "scan_back", 1, std::bind(&LaserPluginTest::ScanBackCb, obj, _1));
+    "robot1/scan_back", 1, std::bind(&LaserPluginTest::ScanBackCb, obj, _1));
 
-  auto* p1 = dynamic_cast<Laser*>(w->plugin_manager_.model_plugins_[0].get());
-  auto* p2 = dynamic_cast<Laser*>(w->plugin_manager_.model_plugins_[1].get());
-  auto* p3 = dynamic_cast<Laser*>(w->plugin_manager_.model_plugins_[2].get());
+  auto * p1 = dynamic_cast<Laser *>(w->plugin_manager_.model_plugins_[0].get());
+  auto * p2 = dynamic_cast<Laser *>(w->plugin_manager_.model_plugins_[1].get());
+  auto * p3 = dynamic_cast<Laser *>(w->plugin_manager_.model_plugins_[2].get());
 
   // let it spin for 10 times to make sure the message gets through
   rclcpp::WallRate rate(500);
-  for (unsigned int i = 0; i < 10; i++) {
+  for (unsigned int i = 0; i < 100 && (!scan_front_received ||
+                                       !scan_center_received ||
+                                       !scan_back_received); i++) {
     w->Update(timekeeper);
     rclcpp::spin_some(node);
     rate.sleep();
   }
 
   // check scan returns
-  EXPECT_TRUE(ScanEq(scan_front, "r_laser_front", -M_PI / 2, M_PI / 2, M_PI / 2,
-                     0.0, 0.0, 0.0, 5.0, {4.5, 4.4, 4.3}, {}));
+  EXPECT_TRUE(scan_front_received);
+  EXPECT_TRUE(ScanEq(
+    scan_front, "r_laser_front", -M_PI / 2, M_PI / 2, M_PI / 2, 0.0, 0.0, 0.0, 5.0, {4.5, 4.4, 4.3},
+    {}));
   EXPECT_TRUE(fltcmp(p1->update_rate_, std::numeric_limits<float>::infinity()))
-      << "Actual: " << p1->update_rate_;
+    << "Actual: " << p1->update_rate_;
   EXPECT_EQ(p1->body_, w->models_[0]->bodies_[0]);
 
-  EXPECT_TRUE(ScanEq(scan_center, "r_center_laser", 0, 2 * M_PI, M_PI / 2, 0.0,
-                     0.0, 0.0, 5.0, {4.8, 4.7, 4.6, 4.9, 4.8}, {}));
+  EXPECT_TRUE(scan_center_received);
+  EXPECT_TRUE(ScanEq(
+    scan_center, "r_center_laser", 0, 2 * M_PI, M_PI / 2, 0.0, 0.0, 0.0, 5.0,
+    {4.8, 4.7, 4.6, 4.9, 4.8}, {}));
   EXPECT_TRUE(fltcmp(p2->update_rate_, 5000)) << "Actual: " << p2->update_rate_;
   EXPECT_EQ(p2->body_, w->models_[0]->bodies_[0]);
 
-  EXPECT_TRUE(ScanEq(scan_back, "r_laser_back", 0, 2 * M_PI, M_PI / 2, 0.0, 0.0,
-                     0.0, 4, {NAN, 3.2, 3.5, NAN, NAN}, {}));
+  EXPECT_TRUE(scan_back_received);
+  EXPECT_TRUE(ScanEq(
+    scan_back, "r_laser_back", 0, 2 * M_PI, M_PI / 2, 0.0, 0.0, 0.0, 4, {NAN, 3.2, 3.5, NAN, NAN},
+    {}));
   EXPECT_TRUE(fltcmp(p3->update_rate_, 1)) << "Actual: " << p3->update_rate_;
   EXPECT_EQ(p3->body_, w->models_[0]->bodies_[0]);
 }
 /**
  * Test the laser plugin for intensity configuration
  */
-TEST_F(LaserPluginTest, intensity_test) {
-  world_yaml =
-      this_file_dir / fs::path("laser_tests/intensity_test/world.yaml");
+TEST_F(LaserPluginTest, intensity_test)
+{
+  world_yaml = this_file_dir / fs::path("laser_tests/intensity_test/world.yaml");
 
   Timekeeper timekeeper(node);
   timekeeper.SetMaxStepSize(1.0);
   std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("test_node");
   w = World::MakeWorld(node, world_yaml.string());
 
-  auto* obj = dynamic_cast<LaserPluginTest*>(this);
+  auto * obj = dynamic_cast<LaserPluginTest *>(this);
   auto sub_1 = node->create_subscription<sensor_msgs::msg::LaserScan>(
-      "scan", 1, std::bind(&LaserPluginTest::ScanFrontCb, obj, _1));
+    "robot1/scan", 1, std::bind(&LaserPluginTest::ScanFrontCb, obj, _1));
   auto sub_2 = node->create_subscription<sensor_msgs::msg::LaserScan>(
-      "scan_center", 1, std::bind(&LaserPluginTest::ScanCenterCb, obj, _1));
+    "robot1/scan_center", 1, std::bind(&LaserPluginTest::ScanCenterCb, obj, _1));
   auto sub_3 = node->create_subscription<sensor_msgs::msg::LaserScan>(
-      "scan_back", 1, std::bind(&LaserPluginTest::ScanBackCb, obj, _1));
+    "robot1/scan_back", 1, std::bind(&LaserPluginTest::ScanBackCb, obj, _1));
 
-  auto* p1 = dynamic_cast<Laser*>(w->plugin_manager_.model_plugins_[0].get());
-  auto* p2 = dynamic_cast<Laser*>(w->plugin_manager_.model_plugins_[1].get());
-  auto* p3 = dynamic_cast<Laser*>(w->plugin_manager_.model_plugins_[2].get());
+  auto * p1 = dynamic_cast<Laser *>(w->plugin_manager_.model_plugins_[0].get());
+  auto * p2 = dynamic_cast<Laser *>(w->plugin_manager_.model_plugins_[1].get());
+  auto * p3 = dynamic_cast<Laser *>(w->plugin_manager_.model_plugins_[2].get());
 
   // let it spin for 10 times to make sure the message gets through
   rclcpp::WallRate rate(500);
@@ -247,18 +299,20 @@ TEST_F(LaserPluginTest, intensity_test) {
   }
 
   // check scan returns
-  EXPECT_TRUE(ScanEq(scan_front, "r_laser_front", -M_PI / 2, M_PI / 2, M_PI / 2,
-                     0.0, 0.0, 0.0, 5.0, {4.5, 4.4, 4.3}, {0, 0, 0}));
+  EXPECT_TRUE(ScanEq(
+    scan_front, "r_laser_front", -M_PI / 2, M_PI / 2, M_PI / 2, 0.0, 0.0, 0.0, 5.0, {4.5, 4.4, 4.3},
+    {0, 0, 0}));
   EXPECT_TRUE(fltcmp(p1->update_rate_, std::numeric_limits<float>::infinity()))
-      << "Actual: " << p1->update_rate_;
+    << "Actual: " << p1->update_rate_;
   EXPECT_EQ(p1->body_, w->models_[0]->bodies_[0]);
-  EXPECT_TRUE(ScanEq(scan_center, "r_center_laser", 0, 2 * M_PI, M_PI / 2, 0.0,
-                     0.0, 0.0, 5.0, {4.8, 4.7, 4.6, 4.9, 4.8},
-                     {0, 255, 0, 0, 0}));
+  EXPECT_TRUE(ScanEq(
+    scan_center, "r_center_laser", 0, 2 * M_PI, M_PI / 2, 0.0, 0.0, 0.0, 5.0,
+    {4.8, 4.7, 4.6, 4.9, 4.8}, {0, 255, 0, 0, 0}));
   EXPECT_TRUE(fltcmp(p2->update_rate_, 5000)) << "Actual: " << p2->update_rate_;
   EXPECT_EQ(p2->body_, w->models_[0]->bodies_[0]);
-  EXPECT_TRUE(ScanEq(scan_back, "r_laser_back", 0, 2 * M_PI, M_PI / 2, 0.0, 0.0,
-                     0.0, 4, {NAN, 3.2, 3.5, NAN, NAN}, {0, 0, 0, 0, 0}));
+  EXPECT_TRUE(ScanEq(
+    scan_back, "r_laser_back", 0, 2 * M_PI, M_PI / 2, 0.0, 0.0, 0.0, 4, {NAN, 3.2, 3.5, NAN, NAN},
+    {0, 0, 0, 0, 0}));
   EXPECT_TRUE(fltcmp(p3->update_rate_, 1)) << "Actual: " << p3->update_rate_;
   EXPECT_EQ(p3->body_, w->models_[0]->bodies_[0]);
 }
@@ -267,7 +321,8 @@ TEST_F(LaserPluginTest, intensity_test) {
  * Checks the laser plugin will throw correct exception for invalid
  * configurations
  */
-TEST_F(LaserPluginTest, invalid_A) {
+TEST_F(LaserPluginTest, invalid_A)
+{
   world_yaml = this_file_dir / fs::path("laser_tests/invalid_A/world.yaml");
 
   try {
@@ -275,14 +330,14 @@ TEST_F(LaserPluginTest, invalid_A) {
     w = World::MakeWorld(node, world_yaml.string());
 
     FAIL() << "Expected an exception, but none were raised";
-  } catch (const PluginException& e) {
+  } catch (const PluginException & e) {
     std::cmatch match;
     std::string regex_str = ".*Flatland YAML: Entry \"range\" does not exist.*";
     std::regex regex(regex_str);
     EXPECT_TRUE(std::regex_match(e.what(), match, regex))
-        << "Exception Message '" + std::string(e.what()) + "'" +
-               " did not match against regex '" + regex_str + "'";
-  } catch (const std::exception& e) {
+      << "Exception Message '" + std::string(e.what()) + "'" + " did not match against regex '" +
+           regex_str + "'";
+  } catch (const std::exception & e) {
     ADD_FAILURE() << "Was expecting a PluginException, another exception was "
                      "caught instead: "
                   << e.what();
@@ -293,7 +348,8 @@ TEST_F(LaserPluginTest, invalid_A) {
  * Checks the laser plugin will throw correct exception for invalid
  * configurations
  */
-TEST_F(LaserPluginTest, invalid_B) {
+TEST_F(LaserPluginTest, invalid_B)
+{
   world_yaml = this_file_dir / fs::path("laser_tests/invalid_B/world.yaml");
 
   try {
@@ -301,14 +357,14 @@ TEST_F(LaserPluginTest, invalid_B) {
     w = World::MakeWorld(node, world_yaml.string());
 
     FAIL() << "Expected an exception, but none were raised";
-  } catch (const PluginException& e) {
+  } catch (const PluginException & e) {
     std::cmatch match;
     std::string regex_str = ".*Invalid \"angle\" params, must have max > min.*";
     std::regex regex(regex_str);
     EXPECT_TRUE(std::regex_match(e.what(), match, regex))
-        << "Exception Message '" + std::string(e.what()) + "'" +
-               " did not match against regex '" + regex_str + "'";
-  } catch (const std::exception& e) {
+      << "Exception Message '" + std::string(e.what()) + "'" + " did not match against regex '" +
+           regex_str + "'";
+  } catch (const std::exception & e) {
     ADD_FAILURE() << "Was expecting a PluginException, another exception was "
                      "caught instead: "
                   << e.what();
@@ -316,7 +372,8 @@ TEST_F(LaserPluginTest, invalid_B) {
 }
 
 // Run all the tests that were declared with TEST()
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
   rclcpp::init(argc, argv);
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

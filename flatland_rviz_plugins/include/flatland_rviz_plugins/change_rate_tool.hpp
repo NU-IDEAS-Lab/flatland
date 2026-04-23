@@ -43,20 +43,22 @@
 #define FLATLAND_RVIZ_PLUGINS__CHANGE_RATE_TOOL_HPP_
 
 #include <QObject>
-#include <flatland_msgs/srv/change_rate.hpp>
 #include <memory>
+#include <flatland_msgs/srv/change_rate.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/tool.hpp>
 #include <std_srvs/srv/empty.hpp>
 
 #include "rviz_default_plugins/visibility_control.hpp"
 
-namespace flatland_rviz_plugins {
+namespace flatland_rviz_plugins
+{
 
-class RVIZ_DEFAULT_PLUGINS_PUBLIC ChangeRateTool : public rviz_common::Tool {
+class RVIZ_DEFAULT_PLUGINS_PUBLIC ChangeRateTool : public rviz_common::Tool
+{
   Q_OBJECT
 
- public:
+public:
   ChangeRateTool();
   ~ChangeRateTool() override;
 
@@ -67,10 +69,9 @@ class RVIZ_DEFAULT_PLUGINS_PUBLIC ChangeRateTool : public rviz_common::Tool {
 
   void setRate(double rate);
 
- private:
+private:
   std::shared_ptr<rclcpp::Node> node_;
-  rclcpp::Client<flatland_msgs::srv::ChangeRate>::SharedPtr
-      change_rate_service_;
+  rclcpp::Client<flatland_msgs::srv::ChangeRate>::SharedPtr change_rate_service_;
 };
 
 }  // namespace flatland_rviz_plugins

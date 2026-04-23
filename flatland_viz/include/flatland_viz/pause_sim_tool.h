@@ -38,6 +38,7 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef PAUSE_SIM_TOOL_H
 #define PAUSE_SIM_TOOL_H
 
@@ -45,19 +46,21 @@
 #include <rviz_common/tool.hpp>
 #include <std_srvs/srv/empty.hpp>
 
-namespace flatland_viz {
+namespace flatland_viz
+{
 
 /**
  * @name                PauseSimTool
  * @brief               Rviz tool to support pausing and unpausing the
  * simulation.
  */
-class PauseSimTool : public rviz_common::Tool {
- public:
+class PauseSimTool : public rviz_common::Tool
+{
+public:
   PauseSimTool();
   ~PauseSimTool();
 
- private:
+private:
   /**
    * @name                onInitialize
    * @brief               Initializes tools currently loaded when rviz starts
@@ -79,6 +82,6 @@ class PauseSimTool : public rviz_common::Tool {
 
   rclcpp::Client<std_srvs::srv::Empty>::SharedPtr pause_service_;
 };
-}
+}  // namespace flatland_viz
 
 #endif  // PAUSE_SIM_TOOL_H
